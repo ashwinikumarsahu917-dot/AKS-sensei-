@@ -1,2 +1,10 @@
 empty editor 
-text from my message
+Paste Github Action code to extract ZIP & build APK here:
+
+name: Unzip app
+
+run: unzip app.zip
+
+name: Build APK
+
+run: ./gradlew assembleDebug
