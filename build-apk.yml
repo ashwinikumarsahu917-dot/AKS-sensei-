@@ -1,0 +1,59 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.5'
+          channel: stable
+          cache: true
+
+      - name: Core package - analyze and test
+        working-directory: aks_sensei_core
+        run: |
+          dart pub get
+          dart analyze
+          dart test
+
+      - name: App - generate platform folders
+        working-directory: aks_aura_sensei_store
+        run: bash tool/bootstrap.sh
+
+      - name: App - analyze and test
+        working-directory: aks_aura_sensei_store
+        run: |
+          flutter pub get
+          flutter analyze --no-fatal-infos
+          flutter test
+
+      - name: App - build release APK
+        working-directory: aks_aura_sensei_store
+        run: flutter build apk --release
+
+      - name: App - build release AAB (for later Play upload)
+        working-directory: aks_aura_sensei_store
+        run: flutter build appbundle --release
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aks-aura-sensei-store-apk
+          path: aks_aura_sensei_store/build/app/outputs/flutter-apk/app-release.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aks-aura-sensei-store-aab-unsigned-for-play
+          path: aks_aura_sensei_store/build/app/outputs/bundle/release/app-release.aab
